@@ -74,23 +74,32 @@ def calculateReturnTransaction(transaction, closingValues):
   return roi
 
 
-def averageReturnTransactions(transactions, totalShares, closingValues):
+def averageReturnTransactions(transactions, closingValues):
   """
   Compute overall effective annual rate using the set of transactions. We
   calculate the annual rate of return for each transaction and report the
-  average over all transactions.
+  average over all transactions (except the very last one).
+
+  Weighted average return weights each transaction by the number of shares
+  purchased in each transaction and is a more accurate reflection.
   """
   # totalShares, transactions = purchaseSharesMonthly(closingValues, x)
 
   totalR = 0.0
   totalAmount = 0.0
+  totalShares = 0.0
+  weightedR = 0.0
   for t in transactions[0:-1]:
     totalR += calculateReturnTransaction(t, closingValues)
     totalAmount += t.amount
+    totalShares += t.shares
+    weightedR   += t.shares * calculateReturnTransaction(t, closingValues)
   print "Total amount invested:",totalAmount
+  print "Total shares",totalShares
   print "Value at end:", closingValues[-1].value*totalShares
   # print "Total return:",(closingValues[-1][2]*totalShares)/(x*len(transactions))
   print "Average annual return=",(100.0*totalR)/len(transactions),"%"
+  print "Weighted average return=",(100.0*weightedR)/totalShares,"%"
 
 
 #####################################################################
@@ -131,10 +140,10 @@ def smartMonthlyPurchase(closingValues, x):
   totalInvestedThisYear = 0.0
   totalRemainingThisYear = x * 12
   for v in closingValues:
-    elapsedTime = v[3] - startYear
+    elapsedTime = v.timestamp - startYear
     elapsedMonths = round(elapsedTime.days / 30.5, 0)
     if elapsedMonths == 12:
-      # print v[3], "Elapsed months:", elapsedMonths, "investing: ", totalRemainingThisYear
+      # print v.timestamp, "Elapsed months:", elapsedMonths, "investing: ", totalRemainingThisYear
       shares = float(totalRemainingThisYear) / v.value
       totalShares += shares
       transaction = Transaction(v.year, v.month, v.value, v.timestamp, shares, totalRemainingThisYear)
@@ -157,14 +166,15 @@ if __name__ == '__main__':
   print "================= Overall Returns ========"
   print "Total duration=",totalYears,"years or ",totalMonths,"months"
   print "Annual return since beginning",
-  print calculateReturn(closingValues[0].value, closingValues[-1].value, totalMonths)
+  print 100.0*calculateReturn(closingValues[0].value,
+                              closingValues[-1].value, totalMonths),"%"
 
   # Print return with basic monthly dollar cost averaging
   print "\n================= Monthly dollar cost averaging ========"
   totalShares, transactions1 = purchaseSharesMonthly(closingValues, 1000.0)
-  averageReturnTransactions(transactions1, totalShares, closingValues)
+  averageReturnTransactions(transactions1, closingValues)
 
   # Print return with smarter monthly dollar cost averaging
   print "\n================= Smarter dollar cost averaging ========"
   totalShares, transactions2 = smartMonthlyPurchase(closingValues, 1000.0)
-  averageReturnTransactions(transactions2, totalShares, closingValues)
+  averageReturnTransactions(transactions2, closingValues)
