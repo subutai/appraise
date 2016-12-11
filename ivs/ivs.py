@@ -28,9 +28,10 @@ def calculateReturn(v1, v2, mths):
   return rate
 
 
-def readFile(filename="sp500daily.csv"):
+def readFile(filename):
   """
-  Read sp500 file, sort from oldest to newest, and return associated dataframe
+  Read closing values file, sort from oldest to newest, and return associated
+  dataframe. We assume this CSV file has at least two headers: Date and Close
   """
   print "Reading filename:",filename
   df = pandas.read_csv(filename, parse_dates=[0])
@@ -40,8 +41,9 @@ def readFile(filename="sp500daily.csv"):
 
 def monthlyClose(dfs):
   """
-  Return closing values at the start of every month. Returns a list of closing values,
-  where each closing value is the namedtuple Closing, containing year, month, closingValue, Timestamp
+  Return closing values at the start of every month. Returns a list of closing
+  values, where each closing value is the namedtuple Closing, containing year,
+  month, closingValue, Timestamp
   """
   prevMonth = -1
   prevYear = -1
@@ -64,10 +66,11 @@ def calculateReturnTransaction(transaction, closingValues):
   """
   duration = closingValues[-1].timestamp - transaction.timestamp
   totalMonths = (duration.days/365.25)*12.0
-  roi =  calculateReturn(transaction.amount,                         # Amount invested in this transaction
-                         closingValues[-1].value*transaction.shares, # Value of this transaction at end
-                         totalMonths                                 # Number of elapsed months
-                         )
+  roi =  calculateReturn(
+    transaction.amount,                         # Amount invested in transaction
+    closingValues[-1].value*transaction.shares, # Value of transaction at end
+    totalMonths                                 # Number of elapsed months
+    )
   # print "Months=",totalMonths,
   # print "Return=", 100.0*roi,"%   .... ",
   # print transaction
@@ -146,7 +149,8 @@ def smartMonthlyPurchase(closingValues, x):
       # print v.timestamp, "Elapsed months:", elapsedMonths, "investing: ", totalRemainingThisYear
       shares = float(totalRemainingThisYear) / v.value
       totalShares += shares
-      transaction = Transaction(v.year, v.month, v.value, v.timestamp, shares, totalRemainingThisYear)
+      transaction = Transaction(v.year, v.month, v.value, v.timestamp,
+                                shares, totalRemainingThisYear)
       transactions.append(transaction)
       startYear = transaction[3]
 
